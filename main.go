@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -10,14 +11,19 @@ import (
 	"github.com/keweiLv/webook/internal/service"
 	"github.com/keweiLv/webook/internal/web"
 	"github.com/keweiLv/webook/internal/web/middleware"
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 	_ "log"
 	_ "net/http"
 	"time"
 )
 
+var v *viper.Viper
+
 func main() {
+	v = initConfig()
 	db := initDB()
 	server := initWebServer()
 	u := initUser(db)
@@ -41,7 +47,8 @@ func initWebServer() *gin.Engine {
 		AllowOrigins:     []string{"http://localhost:3000"},
 		//AllowMethods: []string{"POST", "GET"},
 
-		//ExposeHeaders: []string{"x-jwt-token"},
+		// 允许前端读取的返回 header
+		ExposeHeaders: []string{"x-jwt-token"},
 
 		// 开发环境
 		//AllowOriginFunc: func(origin string) bool {
@@ -70,7 +77,13 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/webook"))
+	username := v.GetString("mysql.username")
+	password := v.GetString("mysql.password")
+	host := v.GetString("mysql.host")
+	port := v.GetString("mysql.port")
+	dbname := v.GetString("mysql.dbname")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname)
+	db, err := gorm.Open(mysql.Open(dsn))
 	if err != nil {
 		panic(err)
 	}
@@ -80,4 +93,18 @@ func initDB() *gorm.DB {
 		panic(err)
 	}
 	return db
+}
+
+func initConfig() *viper.Viper {
+	v := viper.New()                  // 添加配置文件搜索路径，点号为当前目录
+	v.AddConfigPath("./config")       // 添加多个搜索目录
+	v.SetConfigType("yml")            // 如果配置文件没有后缀，可以不用配置
+	v.SetConfigName("dev_config.yml") // 文件名，没有后缀
+	// 读取配置文件
+	if err := v.ReadInConfig(); err == nil {
+		log.Printf("use config file -> %s\n", v.ConfigFileUsed())
+	} else {
+		panic(err)
+	}
+	return v
 }

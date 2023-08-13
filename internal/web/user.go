@@ -105,7 +105,6 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 	}
 	if err != nil {
 		ctx.String(http.StatusOK, "系统异常")
-		print("22222222222")
 		print("err:{}", err)
 		fmt.Print(err)
 		return
