@@ -100,12 +100,11 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Password: req.Password,
 	})
 	if errors.Is(err, service.ErrUserDuplicateEmail) {
-		ctx.String(http.StatusOK, "注册失败")
+		ctx.String(http.StatusOK, "该邮箱已注册")
 		return
 	}
 	if err != nil {
 		ctx.String(http.StatusOK, "系统异常")
-		print("err:{}", err)
 		fmt.Print(err)
 		return
 	}
