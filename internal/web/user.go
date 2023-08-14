@@ -6,10 +6,12 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/keweiLv/webook/internal/domain"
 	"github.com/keweiLv/webook/internal/service"
 	"net/http"
 	"strconv"
+	"time"
 	"unicode/utf8"
 )
 
@@ -50,9 +52,11 @@ func (u *UserHandler) RegisterRoutesV1(ug *gin.RouterGroup) {
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.GET("/profile", u.Profile)
+	//ug.GET("/profile", u.Profile)
+	ug.GET("/profile", u.ProfileJWT)
 	ug.POST("/signup", u.SignUp)
-	ug.POST("/login", u.Login)
+	//ug.POST("/login", u.Login)
+	ug.POST("/login", u.LoginJwt)
 	ug.POST("/edit", u.Edit)
 }
 
@@ -109,6 +113,46 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 	ctx.String(http.StatusOK, "注册成功")
+}
+
+func (u *UserHandler) LoginJwt(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "用户名或密码不正确")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	// 登录成功,设置 jwt
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
+		Uid: user.Id,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, err := token.SignedString([]byte("tLMZV666DG6Ue4pdsxPJIXD3mSQaDdZE"))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统异常")
+		return
+	}
+	ctx.Header("x-jwt-token", tokenStr)
+	fmt.Println(tokenStr)
+	fmt.Println(user)
+	ctx.String(http.StatusOK, "登录成功")
+	return
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
@@ -193,13 +237,6 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
-	//type EditReq struct {
-	//	Id int64 `json:"id"`
-	//}
-	//var req EditReq
-	//if err := ctx.Bind(&req); err != nil {
-	//	return
-	//}
 	id := ctx.Query("id")
 	newid, err := strconv.ParseInt(id, 10, 64)
 	if newid == 0 {
@@ -212,4 +249,32 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, user)
 	return
+}
+
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	c, ok := ctx.Get("claims")
+	if !ok {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	// 断言
+	claims, ok := c.(*UserClaims)
+	if !ok {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	id := claims.Uid
+	//id := ctx.Query("id")
+
+	user, err := u.svc.Profile(ctx, id)
+	if err != nil {
+		ctx.JSON(http.StatusOK, err)
+	}
+	ctx.JSON(http.StatusOK, user)
+	return
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	Uid int64
 }

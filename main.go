@@ -63,7 +63,10 @@ func initWebServer() *gin.Engine {
 	store := cookie.NewStore([]byte("secret"))
 	server.Use(sessions.Sessions("ssid", store))
 
-	server.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
+	//server.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
+
+	// jwt
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
 
 	return server
 }
