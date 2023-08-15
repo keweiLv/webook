@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/keweiLv/webook/internal/repository"
 	"github.com/keweiLv/webook/internal/repository/dao"
 	"github.com/keweiLv/webook/internal/service"
 	"github.com/keweiLv/webook/internal/web"
 	"github.com/keweiLv/webook/internal/web/middleware"
+	"github.com/keweiLv/webook/pkg/ginx/middlewares/ratelimit"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -40,6 +42,14 @@ func initWebServer() *gin.Engine {
 	server.Use(func(ctx *gin.Context) {
 		println("这是第二个 middleware")
 	})
+
+	// redis 限流
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "101.33.127.167",
+		Password: "Kezi_520",
+	})
+	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+
 	server.Use(cors.New(cors.Config{
 		// 是否允许你带 cookie 之类的东西
 		AllowCredentials: true,
@@ -60,7 +70,10 @@ func initWebServer() *gin.Engine {
 		//},
 		MaxAge: 12 * time.Hour,
 	}))
-	store := cookie.NewStore([]byte("secret"))
+	//store := cookie.NewStore([]byte("secret"))
+
+	store := memstore.NewStore([]byte("ZfLRVcUjaIjbJBiZtvMhgxNSqZT2nMFl"), []byte("0pCCmjIcuL4xE8WXY57fucEh6RpE88rt"))
+
 	server.Use(sessions.Sessions("ssid", store))
 
 	//server.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
