@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
+	"github.com/keweiLv/webook/env"
 	"github.com/keweiLv/webook/internal/repository"
 	"github.com/keweiLv/webook/internal/repository/dao"
 	"github.com/keweiLv/webook/internal/service"
@@ -27,11 +27,11 @@ var v *viper.Viper
 
 func main() {
 	//v = initConfig()
-	//db := initDB()
-	//server := initWebServer()
-	//u := initUser(db)
-	//u.RegisterRoutes(server)
-	server := gin.Default()
+	db := initDB()
+	server := initWebServer()
+	u := initUser(db)
+	u.RegisterRoutes(server)
+	//server := gin.Default()
 	server.GET("hello", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "yes，it's ok")
 	})
@@ -50,8 +50,7 @@ func initWebServer() *gin.Engine {
 
 	// redis 限流
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "101.33.127.167",
-		Password: "Kezi_520",
+		Addr: env.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
@@ -98,13 +97,14 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	username := v.GetString("mysql.username")
-	password := v.GetString("mysql.password")
-	host := v.GetString("mysql.host")
-	port := v.GetString("mysql.port")
-	dbname := v.GetString("mysql.dbname")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname)
-	db, err := gorm.Open(mysql.Open(dsn))
+	//username := v.GetString("mysql.username")
+	//password := v.GetString("mysql.password")
+	//host := v.GetString("mysql.host")
+	//port := v.GetString("mysql.port")
+	//dbname := v.GetString("mysql.dbname")
+	//viperDsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname)
+	db, err := gorm.Open(mysql.Open(env.Config.DB.DSN))
+	//db, err := gorm.Open(mysql.Open(viperDsn))
 	if err != nil {
 		panic(err)
 	}
@@ -117,10 +117,10 @@ func initDB() *gorm.DB {
 }
 
 func initConfig() *viper.Viper {
-	v := viper.New()                // 添加配置文件搜索路径，点号为当前目录
-	v.AddConfigPath("./remoteConf") // 添加多个搜索目录
-	v.SetConfigType("yml")          // 如果配置文件没有后缀，可以不用配置
-	//v.SetConfigName("dev_config.yml") // 文件名，没有后缀
+	v := viper.New()                  // 添加配置文件搜索路径，点号为当前目录
+	v.AddConfigPath("./remoteConf")   // 添加多个搜索目录
+	v.SetConfigType("yml")            // 如果配置文件没有后缀，可以不用配置
+	v.SetConfigName("dev_config.yml") // 文件名，没有后缀
 	// 读取配置文件
 	if err := v.ReadInConfig(); err == nil {
 		log.Printf("use config file -> %s\n", v.ConfigFileUsed())
