@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-mysql
+  labels:
+    app: webook-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webook-mysql
+  template:
+    metadata:
+      name: webook-mysql
+      labels:
+        app: webook-mysql
+    spec:
+      containers:
+        - name: webook-mysql
+          image: mysql:8.0.34
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: Kezi_520
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            # 需要对应 MySQL 的数据存储位置
+            - mountPath: /var/lib/mysql
+              # 声明需要的具体 volume
+              name: mysql-storage
+          ports:
+            - containerPort: 3306
+      restartPolicy: Always
+#      整个POD的持久化券
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: webook-mysql-claim
