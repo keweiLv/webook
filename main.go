@@ -117,10 +117,10 @@ func initDB() *gorm.DB {
 }
 
 func initConfig() *viper.Viper {
-	v := viper.New()                  // 添加配置文件搜索路径，点号为当前目录
-	v.AddConfigPath("./config")       // 添加多个搜索目录
-	v.SetConfigType("yml")            // 如果配置文件没有后缀，可以不用配置
-	v.SetConfigName("dev_config.yml") // 文件名，没有后缀
+	v := viper.New()                // 添加配置文件搜索路径，点号为当前目录
+	v.AddConfigPath("./remoteConf") // 添加多个搜索目录
+	v.SetConfigType("yml")          // 如果配置文件没有后缀，可以不用配置
+	//v.SetConfigName("dev_config.yml") // 文件名，没有后缀
 	// 读取配置文件
 	if err := v.ReadInConfig(); err == nil {
 		log.Printf("use config file -> %s\n", v.ConfigFileUsed())
