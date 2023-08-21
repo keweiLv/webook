@@ -137,7 +137,7 @@ func (u *UserHandler) LoginJwt(ctx *gin.Context) {
 	// 登录成功,设置 jwt
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
 		Uid:       user.Id,
 		UserAgent: ctx.Request.UserAgent(),
@@ -150,8 +150,6 @@ func (u *UserHandler) LoginJwt(ctx *gin.Context) {
 		return
 	}
 	ctx.Header("x-jwt-token", tokenStr)
-	fmt.Println(tokenStr)
-	fmt.Println(user)
 	ctx.String(http.StatusOK, "登录成功")
 	return
 }

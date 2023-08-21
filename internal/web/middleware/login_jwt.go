@@ -62,7 +62,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 		}
 		// 自动刷新
 		now := time.Now()
-		if claims.ExpiresAt.Sub(now) < time.Second*50 {
+		if claims.ExpiresAt.Sub(now) < time.Minute*25 {
 			// 续约 token
 			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute))
 			tokenStr, err = token.SignedString([]byte("tLMZV666DG6Ue4pdsxPJIXD3mSQaDdZE"))
