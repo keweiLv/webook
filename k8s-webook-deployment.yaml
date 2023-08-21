@@ -4,7 +4,7 @@ metadata:
   name: webook
 spec:
   # 副本数量
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: webook
@@ -20,4 +20,4 @@ spec:
         - name: webook
           image: kewei/webook:v0.0.1
           ports:
-            - containerPort: 8080
+            - containerPort: 8081

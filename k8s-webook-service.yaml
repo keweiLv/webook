@@ -8,7 +8,7 @@ spec:
     app: webook
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8080
+      port: 86
+      targetPort: 8081
 
   
