@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/keweiLv/webook/env"
 	"github.com/keweiLv/webook/internal/repository"
+	"github.com/keweiLv/webook/internal/repository/cache"
 	"github.com/keweiLv/webook/internal/repository/dao"
 	"github.com/keweiLv/webook/internal/service"
 	"github.com/keweiLv/webook/internal/web"
@@ -29,7 +30,8 @@ func main() {
 	//v = initConfig()
 	db := initDB()
 	server := initWebServer()
-	u := initUser(db)
+	rdb := initRedis()
+	u := initUser(db, rdb)
 	u.RegisterRoutes(server)
 	//server := gin.Default()
 	server.GET("hello", func(ctx *gin.Context) {
@@ -88,9 +90,10 @@ func initWebServer() *gin.Engine {
 	return server
 }
 
-func initUser(db *gorm.DB) *web.UserHandler {
+func initUser(db *gorm.DB, rdb redis.Cmdable) *web.UserHandler {
 	ud := dao.NewUserDAO(db)
-	repo := repository.NewUserRepository(ud)
+	uc := cache.NewUserCache(rdb)
+	repo := repository.NewUserRepository(ud, uc)
 	svc := service.NewUserService(repo)
 	u := web.NewUserHandler(svc)
 	return u
@@ -114,6 +117,13 @@ func initDB() *gorm.DB {
 		panic(err)
 	}
 	return db
+}
+
+func initRedis() redis.Cmdable {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: env.Config.Redis.Addr,
+	})
+	return redisClient
 }
 
 func initConfig() *viper.Viper {

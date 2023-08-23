@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/keweiLv/webook/internal/domain"
+	"github.com/keweiLv/webook/internal/repository/cache"
 	"github.com/keweiLv/webook/internal/repository/dao"
 	"time"
 )
@@ -14,12 +15,14 @@ var (
 )
 
 type UserRepository struct {
-	dao *dao.UserDAO
+	dao   *dao.UserDAO
+	cache *cache.UserCache
 }
 
-func NewUserRepository(dao *dao.UserDAO) *UserRepository {
+func NewUserRepository(dao *dao.UserDAO, cache *cache.UserCache) *UserRepository {
 	return &UserRepository{
-		dao: dao,
+		dao:   dao,
+		cache: cache,
 	}
 }
 
@@ -59,12 +62,20 @@ func (r *UserRepository) Edit(ctx context.Context, u domain.User) error {
 	return err
 }
 
-func (r *UserRepository) Profile(ctx context.Context, id int64) (domain.User, error) {
-	u, err := r.dao.GetUserDetail(ctx, id)
+func (r *UserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
+	u, err := r.cache.Get(ctx, id)
+	if err == nil {
+		return u, nil
+	}
+	// 数据不存在
+	//if err == cache.ErrKeyNotExist {
+	//}
+
+	ue, err := r.dao.FindById(ctx, id)
 	if err != nil {
 		return domain.User{}, err
 	}
-	tmp := u.Birthday
+	tmp := ue.Birthday
 	var birthdayMillis string
 	if tmp != 0 {
 		birthdayMillis, err = UnixMillisToDateString(tmp)
@@ -72,13 +83,16 @@ func (r *UserRepository) Profile(ctx context.Context, id int64) (domain.User, er
 	if err != nil {
 		return domain.User{}, err
 	}
-	return domain.User{
-		Id:       u.Id,
-		Email:    u.Email,
+	u = domain.User{
+		Id:       ue.Id,
+		Email:    ue.Email,
 		Birthday: birthdayMillis,
-		NickName: u.Nickname,
-		Profile:  u.Profile,
-	}, nil
+		NickName: ue.Nickname,
+		Profile:  ue.Profile,
+	}
+	err = r.cache.Set(ctx, u)
+	// 这里的 err 可以日志记录
+	return u, err
 }
 
 func DateStringToUnixMillis(dateStr string) (int64, error) {
