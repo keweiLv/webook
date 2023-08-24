@@ -11,6 +11,7 @@ import (
 )
 
 func TestSender(t *testing.T) {
+	phone, ok := os.LookupEnv("PHONE_NUMBER")
 	secretId, ok := os.LookupEnv("SMS_SECRET_ID")
 	if !ok {
 		t.Fatal()
@@ -24,7 +25,7 @@ func TestSender(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s := NewService(c, "547056", "柯子的成长日记公众号")
+	s := NewService(c, "1400195325", "柯子的成长日记公众号")
 
 	testCases := []struct {
 		name    string
@@ -35,10 +36,10 @@ func TestSender(t *testing.T) {
 	}{
 		{
 			name:   "发送验证码",
-			tplId:  "1877556",
-			params: []string{"123456"},
+			tplId:  "1906254",
+			params: []string{"563889"},
 			// 改成你的手机号码
-			numbers: []string{"10086"},
+			numbers: []string{phone},
 		},
 	}
 	for _, tc := range testCases {

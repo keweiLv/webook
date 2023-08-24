@@ -27,7 +27,7 @@ import (
 var v *viper.Viper
 
 func main() {
-	//v = initConfig()
+	v = initConfig()
 	db := initDB()
 	server := initWebServer()
 	rdb := initRedis()
