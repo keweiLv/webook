@@ -10,6 +10,7 @@ import (
 	"github.com/keweiLv/webook/internal/repository/cache"
 	"github.com/keweiLv/webook/internal/repository/dao"
 	"github.com/keweiLv/webook/internal/service"
+	"github.com/keweiLv/webook/internal/service/sms/memory"
 	"github.com/keweiLv/webook/internal/web"
 	"github.com/keweiLv/webook/internal/web/middleware"
 	"github.com/keweiLv/webook/pkg/ginx/middlewares/ratelimit"
@@ -27,7 +28,7 @@ import (
 var v *viper.Viper
 
 func main() {
-	v = initConfig()
+	//v = initConfig()
 	db := initDB()
 	server := initWebServer()
 	rdb := initRedis()
@@ -85,7 +86,8 @@ func initWebServer() *gin.Engine {
 	//server.Use(middleware.NewLoginMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
 
 	// jwt
-	server.Use(middleware.NewLoginJWTMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").Build())
+	server.Use(middleware.NewLoginJWTMiddlewareBuilder().IgnorePaths("/users/signup").IgnorePaths("/users/login").IgnorePaths("/users/login_sms/code/send").
+		IgnorePaths("/users/login_sms").Build())
 
 	return server
 }
@@ -95,7 +97,12 @@ func initUser(db *gorm.DB, rdb redis.Cmdable) *web.UserHandler {
 	uc := cache.NewUserCache(rdb)
 	repo := repository.NewUserRepository(ud, uc)
 	svc := service.NewUserService(repo)
-	u := web.NewUserHandler(svc)
+	codeCache := cache.NewCodeCache(rdb)
+	codeRepo := repository.NewCodeRepository(codeCache)
+	smsSvc := memory.NewService()
+	//smsSvc := tencent.Service{}
+	codeSvc := service.NewCodeService(codeRepo, smsSvc)
+	u := web.NewUserHandler(svc, codeSvc)
 	return u
 }
 
@@ -127,10 +134,10 @@ func initRedis() redis.Cmdable {
 }
 
 func initConfig() *viper.Viper {
-	v := viper.New()                  // 添加配置文件搜索路径，点号为当前目录
-	v.AddConfigPath("./remoteConf")   // 添加多个搜索目录
-	v.SetConfigType("yml")            // 如果配置文件没有后缀，可以不用配置
-	v.SetConfigName("dev_config.yml") // 文件名，没有后缀
+	v := viper.New()                 // 添加配置文件搜索路径，点号为当前目录
+	v.AddConfigPath("./remoteConf")  // 添加多个搜索目录
+	v.SetConfigType("yml")           // 如果配置文件没有后缀，可以不用配置
+	v.SetConfigName("dev-conf.yaml") // 文件名，没有后缀
 	// 读取配置文件
 	if err := v.ReadInConfig(); err == nil {
 		log.Printf("use config file -> %s\n", v.ConfigFileUsed())

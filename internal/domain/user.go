@@ -10,5 +10,6 @@ type User struct {
 	Birthday string
 	NickName string
 	Profile  string
+	Phone    string
 	Ctime    time.Time
 }

@@ -5,6 +5,7 @@
       <option name="customFlags">
         <array>
           <option value="k8s" />
+          <option value="dev" />
         </array>
       </option>
     </buildTags>

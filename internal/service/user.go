@@ -58,3 +58,21 @@ func (svc *UserService) Edit(ctx context.Context, u domain.User) error {
 func (svc *UserService) Profile(ctx context.Context, id int64) (domain.User, error) {
 	return svc.repo.FindById(ctx, id)
 }
+
+func (svc *UserService) FindOrCreate(ctx context.Context, phone string) (domain.User, error) {
+	u, err := svc.repo.FindByEmail(ctx, phone)
+	if err != repository.ErrUserNotFound {
+		return u, err
+	}
+	// 明确知道是新用户
+	// 此时的 u 没有 ID
+	u = domain.User{
+		Phone: phone,
+	}
+	err = svc.repo.Create(ctx, u)
+	if err != nil {
+		return u, err
+	}
+	// 可能有主从延迟问题
+	return svc.repo.FindByPhone(ctx, phone)
+}

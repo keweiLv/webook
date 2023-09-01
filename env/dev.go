@@ -4,9 +4,9 @@ package env
 
 var Config = config{
 	DB: DBConfig{
-		DSN: "localhost:3306",
+		DSN: "root:Kezi_520@tcp(localhost:30001)/webook",
 	},
 	Redis: RedisConfig{
-		Addr: "localhost:6379",
+		Addr: "localhost:30002",
 	},
 }
