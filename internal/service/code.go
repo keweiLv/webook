@@ -15,19 +15,24 @@ var (
 	ErrCodeSendTooMant        = repository.ErrCodeSendTooMany
 )
 
-type CodeService struct {
-	repo   *repository.CodeRepository
+type CodeService interface {
+	Send(ctx context.Context, biz string, phone string) error
+	Verify(ctx context.Context, biz string, phone string, inputCode string) (bool, error)
+}
+
+type OldCodeService struct {
+	repo   repository.CodeRepository
 	smsSvc sms.Service
 }
 
-func NewCodeService(repo *repository.CodeRepository, smsSvc sms.Service) *CodeService {
-	return &CodeService{
+func NewCodeService(repo repository.CodeRepository, smsSvc sms.Service) CodeService {
+	return &OldCodeService{
 		repo:   repo,
 		smsSvc: smsSvc,
 	}
 }
 
-func (svc *CodeService) Send(ctx context.Context, biz string, phone string) error {
+func (svc *OldCodeService) Send(ctx context.Context, biz string, phone string) error {
 	// 生产验证码
 	code := svc.generateCode()
 	// redis 存储
@@ -40,11 +45,11 @@ func (svc *CodeService) Send(ctx context.Context, biz string, phone string) erro
 	return err
 }
 
-func (svc *CodeService) Verify(ctx context.Context, biz string, phone string, inputCode string) (bool, error) {
+func (svc *OldCodeService) Verify(ctx context.Context, biz string, phone string, inputCode string) (bool, error) {
 	return svc.repo.Verify(ctx, biz, phone, inputCode)
 }
 
-func (svc *CodeService) generateCode() string {
+func (svc *OldCodeService) generateCode() string {
 	num := rand.Intn(1000000)
 	return fmt.Sprintf("%06d", num)
 }
