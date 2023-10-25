@@ -3,7 +3,7 @@ local expectedCode = ARGV[1]
 local code = redis.call("get", key)
 local cntKey = key .. ":cnt"
 local cnt = tonumber(redis.call("get", cntKey))
-if cnt <= 0 then
+if cnt == nil or cnt <= 0 then
     return -1
 elseif expectedCode == code then
     redis.call("set", cntKey, -1)

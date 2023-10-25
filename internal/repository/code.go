@@ -20,10 +20,16 @@ type CachedCodeRepository struct {
 	lruCache *cache.Cache
 }
 
-func NewCodeRepository(c cache.CodeRedisCache, lru *cache.Cache) CodeRepository {
+//func NewCodeRepository(c cache.CodeRedisCache, lru *cache.Cache) CodeRepository {
+//	return &CachedCodeRepository{
+//		cache:    c,
+//		lruCache: lru,
+//	}
+//}
+
+func NewCodeRepository(c cache.CodeRedisCache) CodeRepository {
 	return &CachedCodeRepository{
-		cache:    c,
-		lruCache: lru,
+		cache: c,
 	}
 }
 

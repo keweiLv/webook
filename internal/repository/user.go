@@ -93,7 +93,7 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 	if err != nil {
 		return domain.User{}, err
 	}
-	r.entityToDomain(ue)
+	u = r.entityToDomain(ue)
 	err = r.cache.Set(ctx, u)
 	// 这里的 err 可以日志记录
 	return u, err
