@@ -34,13 +34,13 @@ func NewCodeRepository(c cache.CodeRedisCache) CodeRepository {
 }
 
 func (repo *CachedCodeRepository) Store(ctx context.Context, biz string, phone string, code string) error {
-	//return repo.cache.Set(ctx, biz, phone, code)
+	return repo.cache.Set(ctx, biz, phone, code)
 	// 使用 lru 本地缓存
-	return repo.lruCache.Set(biz, phone, code, "3", false)
+	//return repo.lruCache.Set(biz, phone, code, "3", false)
 }
 
 func (repo *CachedCodeRepository) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
-	//return repo.cache.Verify(ctx, biz, phone, inputCode)
+	return repo.cache.Verify(ctx, biz, phone, inputCode)
 	// 使用 lru 本地缓存
-	return repo.lruCache.Verify(biz, phone, inputCode)
+	//return repo.lruCache.Verify(biz, phone, inputCode)
 }
