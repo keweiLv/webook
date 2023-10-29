@@ -30,12 +30,13 @@ func (t *TimeoutFailoverSMSService) Send(ctx context.Context, tpl string, args [
 	switch err {
 	case context.DeadlineExceeded:
 		atomic.AddInt32(&t.cnt, 1)
+		return err
 	case nil:
 		atomic.StoreInt32(&t.cnt, 0)
+		return nil
 	default:
 		return err
 	}
-	return err
 }
 
 func NewTimeoutFailoverSMSService() sms.Service {
