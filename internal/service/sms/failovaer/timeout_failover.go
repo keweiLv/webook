@@ -23,7 +23,7 @@ func (t *TimeoutFailoverSMSService) Send(ctx context.Context, tpl string, args [
 		if atomic.CompareAndSwapInt32(&t.idx, idx, newIdx) {
 			atomic.StoreInt32(&t.cnt, 0)
 		}
-		idx = atomic.LoadInt32()
+		idx = atomic.LoadInt32(&t.idx)
 	}
 	svc := t.svcs[idx]
 	err := svc.Send(ctx, tpl, args, numbers...)
@@ -35,7 +35,7 @@ func (t *TimeoutFailoverSMSService) Send(ctx context.Context, tpl string, args [
 	default:
 		return err
 	}
-
+	return err
 }
 
 func NewTimeoutFailoverSMSService() sms.Service {
